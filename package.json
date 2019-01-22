@@ -4,6 +4,7 @@
   "description": "hello",
   "main": "index.js",
   "scripts": {
+    "build": "rollup -c",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -12,12 +13,28 @@
   },
   "author": "Korokhodkin Denis",
   "license": "ISC",
+  "dependencies": {
+    "lodash": "4.17.11",
+    "moment": "2.23.0",
+    "prop-types": "15.6.2",
+    "react": "16.7.0",
+    "react-redux": "6.0.0",
+    "rollup": "1.1.0"
+  },
   "devDependencies": {
+    "@babel/core": "7.2.2",
+    "@babel/plugin-proposal-object-rest-spread": "7.2.0",
+    "@babel/preset-env": "7.2.3",
+    "@babel/preset-react": "7.0.0",
+    "babel-core": "6.26.3",
     "eslint": "^5.12.0",
     "eslint-config-airbnb": "^17.1.0",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-jsx-a11y": "^6.1.2",
     "eslint-plugin-react": "^7.12.4",
-    "prettier": "1.15.3"
+    "prettier": "1.15.3",
+    "rollup-plugin-babel": "4.3.0",
+    "rollup-plugin-node-resolve": "4.0.0",
+    "rollup-plugin-terser": "4.0.2"
   }
 }
