@@ -1,40 +1,55 @@
 import nodeResolve from 'rollup-plugin-node-resolve';
 import babel from 'rollup-plugin-babel';
-
+import replace from 'rollup-plugin-replace';
+import commonjs from 'rollup-plugin-commonjs';
+import { uglify } from 'rollup-plugin-uglify';
 import pkg from './package.json';
 
-const INPUT_FILE = './src/index.js';
+const env = process.env.NODE_ENV;
 
-export default [
-  // CommonJS
-  {
-    input: INPUT_FILE,
-    output: { file: 'lib/reactformbuilder.js', format: 'cjs', indent: false },
-    external: [
-      ...Object.keys(pkg.dependencies || {}),
-      ...Object.keys(pkg.peerDependencies || {}),
-    ],
-    plugins: [
-      nodeResolve({
-        jsnext: true,
-        extensions: ['.js', '.jsx'],
-      }),
-      babel()],
+const config = {
+  input: 'src/index.js',
+  external: Object.keys(pkg.peerDependencies || {}),
+  output: {
+    format: 'umd',
+    name: 'ReactFormBuilder',
+    globals: {
+      react: 'React',
+    },
   },
+  plugins: [
+    nodeResolve({
+      jsnext: true,
+      extensions: ['.js', '.jsx'],
+    }),
+    babel({
+      exclude: '**/node_modules/**',
+      runtimeHelpers: true,
+    }),
+    replace({
+      'process.env.NODE_ENV': JSON.stringify(env),
+    }),
+    commonjs({
+      namedExports: {
+        include: 'node_modules/**',
+        'node_modules/react/index.js': ['Children', 'Component', 'createElement', 'PureComponent'],
+        'node_modules/react-is/index.js': ['isValidElementType'],
+      },
+    }),
+  ],
+};
 
-  // ES
-  {
-    input: INPUT_FILE,
-    output: { file: 'es/reactformbuilder.js', format: 'es', indent: false },
-    external: [
-      ...Object.keys(pkg.dependencies || {}),
-      ...Object.keys(pkg.peerDependencies || {}),
-    ],
-    plugins: [
-      nodeResolve({
-        jsnext: true,
-        extensions: ['.js', '.jsx'],
-      }),
-      babel()],
-  },
-];
+if (env === 'production') {
+  config.plugins.push(
+    uglify({
+      compress: {
+        pure_getters: true,
+        unsafe: true,
+        unsafe_comps: true,
+        warnings: false,
+      },
+    }),
+  );
+}
+
+export default config;

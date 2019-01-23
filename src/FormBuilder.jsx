@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import DateUtils from './utils/dateUtils';
@@ -151,7 +151,7 @@ function formatFormToView(
   );
 }
 
-class DynamicFormContainer extends Component {
+class DynamicFormContainer extends React.Component {
   constructor() {
     super();
 
