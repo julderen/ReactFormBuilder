@@ -2,7 +2,8 @@
   "name": "reactformbuilder",
   "version": "1.0.0",
   "description": "hello",
-  "main": "index.js",
+  "main": "src/index.js",
+  "module": "es/index.js",
   "scripts": {
     "build": "rollup -c",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@babel/core": "7.2.2",
     "@babel/plugin-proposal-object-rest-spread": "7.2.0",
+    "@babel/plugin-transform-object-assign": "7.2.0",
     "@babel/preset-env": "7.2.3",
     "@babel/preset-react": "7.0.0",
     "babel-core": "6.26.3",
