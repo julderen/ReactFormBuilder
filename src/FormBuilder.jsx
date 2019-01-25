@@ -2,8 +2,7 @@ import _ from 'lodash';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import DateUtils from './utils/dateUtils';
-import Components from './components/components';
-import Containers from './components/containers';
+import dynamicUtils from './utils/dynamicUtils';
 
 function applyDefaultValue(components, initialValues, change, CONTAINERS, parentKey) {
   const formatKey = key => (parentKey ? `${parentKey}__${key}` : key);
@@ -63,33 +62,45 @@ function formatFormToView(
   return components.map(
     ({
       type, key, width, props, displayWhen, validation, children, defaultValue, ...other
-    }) => (
-      <Containers
-        {...other}
-        containersList={containersList}
-        key={key}
-        formatKey={formatKey}
-        callBack={formatFormToView}
-        complexFields={complexFields}
-        change={change}
-      />
-    ) || (
-    <Components
-      complexFields={complexFields}
-      formatKey={formatKey}
-      key={key}
-      filedsList={filedsList}
-      change={change}
-    />
-    ) || <div>Такого компонента нет</div>,
+    }) => {
+      if (filedsList[type]) {
+        const textField = complexFields.find(field => field.key === formatKey(key));
+
+        return React.createElement(filedsList[type], {
+          ...other,
+          ...(props && _.reduce(props, (result, prop) => _.assign(result, prop), {})),
+          validation,
+          name: formatKey(key),
+          textField: textField && textField.observableFields,
+          label: key,
+          required: validation && validation.required,
+          maxLength: validation && validation.maxLength,
+          change,
+          validate: dynamicUtils.formatValidation(validation, type, formatKey(key)),
+        });
+      }
+      if (containersList[type]) {
+        return React.createElement(
+          containersList[type],
+          { key: formatKey(key), label: key },
+          formatFormToView(
+            children,
+            complexFields,
+            change,
+            filedsList,
+            containersList,
+            formatKey(key),
+          ),
+        );
+      }
+      return <div>Такого компонента нет</div>;
+    },
   );
 }
 
 class DynamicFormContainer extends Component {
   componentDidMount() {
-    const {
-      components, initialValues, change,
-    } = this.props;
+    const { components, initialValues, change } = this.props;
 
     applyDefaultValue(components, initialValues, change);
   }
@@ -110,11 +121,7 @@ class DynamicFormContainer extends Component {
 
   render() {
     const {
-      components,
-      complexFields,
-      change,
-      filedsList,
-      containersList,
+      components, complexFields, change, filedsList, containersList,
     } = this.props;
 
     return formatFormToView(components, complexFields, change, filedsList, containersList);
@@ -138,7 +145,6 @@ DynamicFormContainer.propTypes = {
   initialValues: PropTypes.object,
 };
 
-DynamicFormContainer.defaultProps = {
-};
+DynamicFormContainer.defaultProps = {};
 
 export default DynamicFormContainer;
