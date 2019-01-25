@@ -49,6 +49,12 @@ function applyDefaultValue(components, initialValues, change, CONTAINERS, parent
   });
 }
 
+function formatByParenKey(parentKey) {
+  return function createKey(key) {
+    return _.join(_.compact([parentKey, key]), '__');
+  };
+}
+
 function formatFormToView(
   components,
   complexFields,
@@ -57,32 +63,33 @@ function formatFormToView(
   containersList,
   parentKey,
 ) {
-  const formatKey = key => (parentKey ? `${parentKey}__${key}` : key);
+  const formatKey = formatByParenKey(parentKey);
 
   return components.map(
     ({
-      type, key, width, props, displayWhen, validation, children, defaultValue, ...other
+      type, key, width, props, displayWhen, validation, children, defaultValue, options, ...other
     }) => {
       if (filedsList[type]) {
         const textField = complexFields.find(field => field.key === formatKey(key));
 
         return React.createElement(filedsList[type], {
           ...other,
+          ...options,
           ...(props && _.reduce(props, (result, prop) => _.assign(result, prop), {})),
           validation,
           name: formatKey(key),
           textField: textField && textField.observableFields,
-          label: key,
           required: validation && validation.required,
           maxLength: validation && validation.maxLength,
           change,
           validate: dynamicUtils.formatValidation(validation, type, formatKey(key)),
         });
       }
+
       if (containersList[type]) {
         return React.createElement(
           containersList[type],
-          { key: formatKey(key), label: key },
+          { ...options, key: formatKey(key), label: key },
           formatFormToView(
             children,
             complexFields,
@@ -145,6 +152,10 @@ DynamicFormContainer.propTypes = {
   initialValues: PropTypes.object,
 };
 
-DynamicFormContainer.defaultProps = {};
+DynamicFormContainer.defaultProps = {
+  complexFields: [],
+  components: [],
+  initialValues: {},
+};
 
 export default DynamicFormContainer;
