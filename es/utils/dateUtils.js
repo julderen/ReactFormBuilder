@@ -4,46 +4,49 @@ import { SERVER_FORMAT } from '../constants/dateConstants';
 export default {
   utcOffset: moment().utcOffset(),
   isMoment: moment.isMoment,
-  moment: moment,
-  now: function now() {
-    return moment().startOf('day');
-  },
-  serverDate: function serverDate() {
+  moment,
+  now: () => moment().startOf('day'),
+
+  serverDate() {
     return moment.utc().format(SERVER_FORMAT);
   },
-  toMoment: function toMoment(date, isServer) {
-    var momentDate = this.isMoment(date) ? date : moment(date);
+
+  toMoment(date, isServer) {
+    const momentDate = this.isMoment(date) ? date : moment(date);
     return isServer ? momentDate.subtract(this.utcOffset, 'm') : momentDate.add(this.utcOffset, 'm');
   },
-  toServer: function toServer(date) {
+
+  toServer(date) {
     return this.moment(date).format(SERVER_FORMAT);
   },
-  toClient: function toClient(date, format) {
+
+  toClient(date, format) {
     return this.toMoment(date).format(format);
   },
-  timeToMoment: function timeToMoment(time) {
+
+  timeToMoment(time) {
     if (!time) return this.moment();
-
-    var _time$split = time.split(':'),
-        hours = _time$split[0],
-        minutes = _time$split[1];
-
+    const [hours, minutes] = time.split(':');
     return this.moment({
-      hours: hours,
-      minutes: minutes
+      hours,
+      minutes
     });
   },
-  isLastDay: function isLastDay(date) {
-    var now = this.moment();
+
+  isLastDay(date) {
+    const now = this.moment();
     return !now.isSame(date, 'day') && now.isAfter(date);
   },
-  clientTimezone: function clientTimezone() {
+
+  clientTimezone() {
     return new Date().getTimezoneOffset();
   },
-  toServerTimeInterval: function toServerTimeInterval(startDate, endDate) {
+
+  toServerTimeInterval(startDate, endDate) {
     return {
       startDate: this.toServer(startDate),
       endDate: this.toServer(endDate.add(1, 'day').startOf('day'))
     };
   }
+
 };
