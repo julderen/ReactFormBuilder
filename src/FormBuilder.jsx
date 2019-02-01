@@ -1,11 +1,12 @@
 import _ from 'lodash';
+import memoize from 'memoize-one';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import DateUtils from './utils/dateUtils';
 import dynamicUtils from './utils/dynamicUtils';
 
 function applyDefaultValue(components, initialValues, change, CONTAINERS, parentKey) {
-  const formatKey = key => (parentKey ? `${parentKey}__${key}` : key);
+  const formatKey = dynamicUtils.formatByParenKey(parentKey);
 
   components.map(({
     type, key, children, defaultValue,
@@ -49,38 +50,42 @@ function applyDefaultValue(components, initialValues, change, CONTAINERS, parent
   });
 }
 
-function formatByParenKey(parentKey) {
-  return function createKey(key) {
-    return _.join(_.compact([parentKey, key]), '__');
-  };
-}
+class DynamicFormContainer extends Component {
+  constructor(props) {
+    super(props);
 
-function formatFormToView(
-  components,
-  complexFields,
-  change,
-  filedsList,
-  containersList,
-  parentKey,
-) {
-  const formatKey = formatByParenKey(parentKey);
+    this.formatAdapterSheme = memoize((sheme, adapters) => (
+      console.log('DynamicFormContainer counter')
+      || adapters.reduce((res, adapter) => adapter(res), sheme)
+    ));
+  }
 
-  return components.map(
-    ({
-      type, key, width, props, displayWhen, validation, children, defaultValue, options, ...other
-    }) => {
+  componentDidMount() {
+    const { sheme, initialValues, change } = this.props;
+
+    applyDefaultValue(sheme, initialValues, change);
+  }
+
+  // Рендерет форму по схеме ({ sheme, parentKey })
+
+  renderShemeToView(params) {
+    const { sheme, parentKey } = params;
+    const { filedsList, containersList, change } = this.props;
+    const formatKey = dynamicUtils.formatByParenKey(parentKey);
+
+    return sheme.map((element) => {
+      const { type, key, options } = element;
+
       if (filedsList[type]) {
-        const textField = complexFields.find(field => field.key === formatKey(key));
+        const {
+          width, props, displayWhen, validation, children, defaultValue, ...other
+        } = element;
 
         return React.createElement(filedsList[type], {
           ...other,
           ...options,
-          ...(props && _.reduce(props, (result, prop) => _.assign(result, prop), {})),
           validation,
           name: formatKey(key),
-          textField: textField && textField.observableFields,
-          required: validation && validation.required,
-          maxLength: validation && validation.maxLength,
           change,
           validate: dynamicUtils.formatValidation(validation, type, formatKey(key)),
         });
@@ -90,72 +95,42 @@ function formatFormToView(
         return React.createElement(
           containersList[type],
           { ...options, key: formatKey(key), label: key },
-          formatFormToView(
-            children,
-            complexFields,
-            change,
-            filedsList,
-            containersList,
-            formatKey(key),
-          ),
+          this.formatShemeToView({ ...params, parentKey: formatKey(key) }),
         );
       }
+
       return <div>Такого компонента нет</div>;
-    },
-  );
-}
-
-class DynamicFormContainer extends Component {
-  componentDidMount() {
-    const { components, initialValues, change } = this.props;
-
-    applyDefaultValue(components, initialValues, change);
-  }
-
-  mappingField(map, response, initialValues, change) {
-    _.map(map, (name, key) => {
-      if (_.isObject(name)) {
-        return this.mappingField(name, _.get(response, key), initialValues, change);
-      }
-
-      if (!_.get(initialValues, name, null)) {
-        return change(name, _.get(response, key));
-      }
-
-      return null;
     });
   }
 
   render() {
-    const {
-      components, complexFields, change, filedsList, containersList,
-    } = this.props;
+    const { formWrapper, sheme, adapters } = this.props;
+    const adaptedSheme = this.formatAdapterSheme(sheme, adapters);
 
-    return formatFormToView(components, complexFields, change, filedsList, containersList);
+    return React.createElement(formWrapper, null, this.formatShemeToView({ sheme: adaptedSheme }));
   }
 }
-/*
-  Список компонетов
-  Список контейнеров
-  Валидация кастомная
-  Обретка для формы
-*/
 
 DynamicFormContainer.propTypes = {
-  filedsList: PropTypes.object.isRequired,
   // Список компонентов не содержащих в себе другие эдементы
-  containersList: PropTypes.object.isRequired,
+  filedsList: PropTypes.object.isRequired,
   // Список компонентов содержащие в себе другие эдементы
-  change: PropTypes.func.isRequired, // Функция с 2 параметрами (имя компонента, новое значение)
-  complexFields: PropTypes.array,
-  components: PropTypes.array,
+  containersList: PropTypes.object.isRequired,
+  // Функция с 2 параметрами (имя компонента, новое значение)
+  change: PropTypes.func.isRequired,
+  // Компонент обертка для всей формы
+  formWrapper: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+  // Схема компонентов
+  sheme: PropTypes.array.isRequired,
+  adapters: PropTypes.arrayOf(PropTypes.func),
+  // Начальные значения для компонентов
   initialValues: PropTypes.object,
 };
 
 DynamicFormContainer.defaultProps = {
-  complexFields: [],
-  components: [],
   initialValues: {},
+  adapters: [],
+  formWrapper: 'div',
 };
 
 export default DynamicFormContainer;

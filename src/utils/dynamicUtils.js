@@ -68,4 +68,10 @@ export default {
       {},
     );
   },
+
+  formatByParenKey(parentKey) {
+    return function createKey(key) {
+      return _.join(_.compact([parentKey, key]), '__');
+    };
+  },
 };
