@@ -2,7 +2,7 @@ import _extends from "@babel/runtime/helpers/esm/extends";
 import _ from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
-import dynamicUtils from '../utils/dynamicUtils';
+import formBuilderUtils from '../utils/formBuilderUtils';
 
 const components = ({
   complexFields,
@@ -25,7 +25,7 @@ const components = ({
     required: validation && validation.required,
     maxLength: validation && validation.maxLength,
     change,
-    validate: dynamicUtils.formatValidation(validation, type, formatKey(key))
+    validate: formBuilderUtils.formatValidation(validation, type, formatKey(key))
   }));
 };
 

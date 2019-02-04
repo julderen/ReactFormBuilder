@@ -3,10 +3,10 @@ import memoize from 'memoize-one';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import DateUtils from './utils/dateUtils';
-import dynamicUtils from './utils/dynamicUtils';
+import formBuilderUtils from './utils/fromBuilderUtils';
 
 function applyDefaultValue(components, initialValues, change, CONTAINERS, parentKey) {
-  const formatKey = dynamicUtils.formatByParenKey(parentKey);
+  const formatKey = formBuilderUtils.formatByParenKey(parentKey);
 
   components.map(({
     type, key, children, defaultValue,
@@ -54,10 +54,11 @@ class DynamicFormContainer extends Component {
   constructor(props) {
     super(props);
 
-    this.formatAdapterSheme = memoize((sheme, adapters) => (
-      console.log('DynamicFormContainer counter')
-      || adapters.reduce((res, adapter) => adapter(res), sheme)
-    ));
+    // Адаптирует форму для рендера
+    this.formatAdapterSheme = memoize(
+      (sheme, adapters) => adapters.reduce((res, adapter) => adapter(res), sheme),
+      _.isEqual,
+    );
   }
 
   componentDidMount() {
@@ -68,46 +69,49 @@ class DynamicFormContainer extends Component {
 
   // Рендерет форму по схеме ({ sheme, parentKey })
 
-  renderShemeToView(params) {
-    const { sheme, parentKey } = params;
+  renderShemeToView(entryParams) {
     const { filedsList, containersList, change } = this.props;
-    const formatKey = dynamicUtils.formatByParenKey(parentKey);
 
-    return sheme.map((element) => {
-      const { type, key, options } = element;
+    function rednderSheme(params) {
+      const { sheme, parentKey } = params;
+      const formatKey = formBuilderUtils.formatByParenKey(parentKey);
 
-      if (filedsList[type]) {
-        const {
-          width, props, displayWhen, validation, children, defaultValue, ...other
-        } = element;
+      return sheme.map((element) => {
+        const { type, key, options } = element;
 
-        return React.createElement(filedsList[type], {
-          ...other,
-          ...options,
-          validation,
-          name: formatKey(key),
-          change,
-          validate: dynamicUtils.formatValidation(validation, type, formatKey(key)),
-        });
-      }
+        if (filedsList[type]) {
+          const { validation, ...other } = element;
 
-      if (containersList[type]) {
-        return React.createElement(
-          containersList[type],
-          { ...options, key: formatKey(key), label: key },
-          this.formatShemeToView({ ...params, parentKey: formatKey(key) }),
-        );
-      }
+          return React.createElement(filedsList[type], {
+            ...other,
+            ...options,
+            ...validation,
+            name: formatKey(key),
+            change,
+            validate: formBuilderUtils.formatValidation(validation, type, formatKey(key)),
+          });
+        }
 
-      return <div>Такого компонента нет</div>;
-    });
+        if (containersList[type]) {
+          return React.createElement(
+            containersList[type],
+            { ...options, key: formatKey(key), label: key },
+            rednderSheme({ sheme: element.children, parentKey: formatKey(key) }),
+          );
+        }
+
+        return <div>Такого компонента нет</div>;
+      });
+    }
+
+    return rednderSheme(entryParams);
   }
 
   render() {
     const { formWrapper, sheme, adapters } = this.props;
     const adaptedSheme = this.formatAdapterSheme(sheme, adapters);
 
-    return React.createElement(formWrapper, null, this.formatShemeToView({ sheme: adaptedSheme }));
+    return React.createElement(formWrapper, null, this.renderShemeToView({ sheme: adaptedSheme }));
   }
 }
 
