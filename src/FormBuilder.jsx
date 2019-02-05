@@ -3,115 +3,118 @@ import memoize from 'memoize-one';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import DateUtils from './utils/dateUtils';
-import formBuilderUtils from './utils/fromBuilderUtils';
-
-function applyDefaultValue(components, initialValues, change, CONTAINERS, parentKey) {
-  const formatKey = formBuilderUtils.formatByParenKey(parentKey);
-
-  components.map(({
-    type, key, children, defaultValue,
-  }) => {
-    if (_.includes(CONTAINERS, type)) {
-      return applyDefaultValue(children, initialValues, change, formatKey(key));
-    }
-
-    if (
-      type === 'DateInterval'
-      && _.isObject(defaultValue)
-      && !_.get(initialValues, formatKey(key), null)
-    ) {
-      if (defaultValue.startDate === 'NOW') {
-        return change(formatKey(key), {
-          startDate: { display: DateUtils.now(), value: DateUtils.now().format() },
-        });
-      }
-
-      if (defaultValue.endDate === 'NOW') {
-        return change(formatKey(key), {
-          endDate: { display: DateUtils.now(), value: DateUtils.now().format() },
-        });
-      }
-    }
-
-    if (defaultValue && !_.get(initialValues, formatKey(key), null)) {
-      switch (defaultValue) {
-        case 'NOW':
-          change(formatKey(key), { display: DateUtils.now(), value: DateUtils.now().format() });
-          break;
-        case 'TIME_NOW':
-          change(formatKey(key), DateUtils.moment().format('HH:mm'));
-          break;
-        default:
-          change(formatKey(key), defaultValue);
-      }
-    }
-
-    return null;
-  });
-}
+import formBuilderUtils from './utils/formBuilderUtils';
 
 class DynamicFormContainer extends Component {
   constructor(props) {
     super(props);
 
-    // Адаптирует форму для рендера
-    this.formatAdapterSheme = memoize(
-      (sheme, adapters) => adapters.reduce((res, adapter) => adapter(res), sheme),
+    // Функция адаптации формы для рендера
+    this.formatAdapterScheme = memoize(
+      (scheme, adapters) => adapters.reduce((res, adapter) => adapter(res), scheme),
       _.isEqual,
     );
   }
 
   componentDidMount() {
-    const { sheme, initialValues, change } = this.props;
+    const { scheme, initialValues, change } = this.props;
 
-    applyDefaultValue(sheme, initialValues, change);
+    this.applyDefaultValue(scheme, initialValues, change);
   }
 
-  // Рендерет форму по схеме ({ sheme, parentKey })
+  applyDefaultValue() {
+    const {
+      scheme: initialScheme,
+      specialDefaultValues,
+      initialValues,
+      change,
+      containersList,
+    } = this.props;
 
-  renderShemeToView(entryParams) {
-    const { filedsList, containersList, change } = this.props;
-
-    function rednderSheme(params) {
-      const { sheme, parentKey } = params;
+    function recursingApplay(scheme, parentKey) {
       const formatKey = formBuilderUtils.formatByParenKey(parentKey);
 
-      return sheme.map((element) => {
+      scheme.map(({
+        type, key, children, defaultValue,
+      }) => {
+        if (containersList[type]) {
+          return this.applyDefaultValue(children, initialValues, change, formatKey(key));
+        }
+
+        if (defaultValue && !_.get(initialValues, formatKey(key), null)) {
+          const adaptedValue = _.reduce(
+            specialDefaultValues.reverse(),
+            (res, adapter) => adapter(defaultValue, type) || res,
+            defaultValue,
+          );
+
+          change(formatKey(key), adaptedValue);
+        }
+
+        return null;
+      });
+    }
+  }
+
+  // Рендерет форму по схеме ({ scheme, parentKey })
+
+  renderSchemeToView() {
+    const {
+      scheme: initialScheme,
+      adapters,
+      filedsList,
+      containersList,
+      containersProps,
+      filedsProps,
+    } = this.props;
+
+    // Функция рендера запоминает контекст и используется в рекурсии
+    function rednderScheme(params) {
+      const { scheme, parentKey } = params;
+      const formatKey = formBuilderUtils.formatByParenKey(parentKey);
+
+      return scheme.map((element) => {
         const { type, key, options } = element;
 
         if (filedsList[type]) {
           const { validation, ...other } = element;
 
+          //  Рендер компонента
           return React.createElement(filedsList[type], {
             ...other,
             ...options,
             ...validation,
+            ...filedsProps,
             name: formatKey(key),
-            change,
             validate: formBuilderUtils.formatValidation(validation, type, formatKey(key)),
           });
         }
 
         if (containersList[type]) {
+          //  Рендер контейнера
           return React.createElement(
             containersList[type],
-            { ...options, key: formatKey(key), label: key },
-            rednderSheme({ sheme: element.children, parentKey: formatKey(key) }),
+            {
+              ...options,
+              ...containersProps,
+              key: formatKey(key),
+            },
+            rednderScheme({ scheme: element.children, parentKey: formatKey(key) }),
           );
         }
 
+        //  Рендер пустого компонента
         return <div>Такого компонента нет</div>;
       });
     }
 
-    return rednderSheme(entryParams);
+    return rednderScheme({ scheme: this.formatAdapterScheme(initialScheme, adapters) });
   }
 
   render() {
-    const { formWrapper, sheme, adapters } = this.props;
-    const adaptedSheme = this.formatAdapterSheme(sheme, adapters);
+    const { formWrapper } = this.props;
 
-    return React.createElement(formWrapper, null, this.renderShemeToView({ sheme: adaptedSheme }));
+    return React.createElement(formWrapper, null, this.renderSchemeToView());
   }
 }
 
@@ -125,14 +128,22 @@ DynamicFormContainer.propTypes = {
   // Компонент обертка для всей формы
   formWrapper: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
   // Схема компонентов
-  sheme: PropTypes.array.isRequired,
+  scheme: PropTypes.array.isRequired,
+  // Массив функций предназанченных для последовательного изменеия схемы (schem)
   adapters: PropTypes.arrayOf(PropTypes.func),
   // Начальные значения для компонентов
   initialValues: PropTypes.object,
+  // Массив функций предназанченных для специфичных значений формы
+  specialDefaultValues: PropTypes.arrayOf(PropTypes.func),
+  //
+  containersProps: PropTypes.object,
+  filedsProps: PropTypes.object,
 };
 
 DynamicFormContainer.defaultProps = {
   initialValues: {},
+  containersProps: {},
+  filedsProps: {},
   adapters: [],
   formWrapper: 'div',
 };
