@@ -2,7 +2,6 @@ import _ from 'lodash';
 import memoize from 'memoize-one';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import DateUtils from './utils/dateUtils';
 import formBuilderUtils from './utils/formBuilderUtils';
 
 class DynamicFormContainer extends Component {
@@ -54,6 +53,8 @@ class DynamicFormContainer extends Component {
         return null;
       });
     }
+
+    return recursingApplay(initialScheme);
   }
 
   // Рендерет форму по схеме ({ scheme, parentKey })
@@ -83,7 +84,6 @@ class DynamicFormContainer extends Component {
           return React.createElement(filedsList[type], {
             ...other,
             ...options,
-            ...validation,
             ...filedsProps,
             name: formatKey(key),
             validate: formBuilderUtils.formatValidation(validation, type, formatKey(key)),
