@@ -21,6 +21,8 @@ class DynamicFormContainer extends Component {
     this.applyDefaultValue(scheme, initialValues, change);
   }
 
+  // Применяет дефолтные значения для полей
+
   applyDefaultValue() {
     const {
       scheme: initialScheme,
@@ -67,6 +69,8 @@ class DynamicFormContainer extends Component {
       containersList,
       containersProps,
       filedsProps,
+      validationsRules,
+      defauleValidation,
     } = this.props;
 
     // Функция рендера запоминает контекст и используется в рекурсии
@@ -86,7 +90,10 @@ class DynamicFormContainer extends Component {
             ...options,
             ...filedsProps,
             name: formatKey(key),
-            validate: formBuilderUtils.formatValidation(validation, type, formatKey(key)),
+            validate: formBuilderUtils.formatValidation(
+              formBuilderUtils.composeValidationRules(validation, defauleValidation),
+              validationsRules,
+            ),
           });
         }
 
@@ -135,7 +142,13 @@ DynamicFormContainer.propTypes = {
   initialValues: PropTypes.object,
   // Массив функций предназанченных для специфичных значений формы
   specialDefaultValues: PropTypes.arrayOf(PropTypes.func),
-  //
+  // Объект содержащий в себе все возможные функции валидации,
+  // которая должна возвращяать текст ошибки
+  validationsRules: PropTypes.object,
+  // Объект содержащий дефолтнаые валидации для определенных типов компонентов
+  // ключ: навзвание компонента
+  // значение: объект с валидациией или функция (name) возвращет объект валидации
+  defauleValidation: PropTypes.object,
   containersProps: PropTypes.object,
   filedsProps: PropTypes.object,
 };
