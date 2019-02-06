@@ -91,7 +91,7 @@ class DynamicFormContainer extends PureComponent {
 
           return React.createElement(filedsList[type], _extends({}, other, options, filedsProps, {
             name: formatKey(key),
-            validate: formBuilderUtils.formatValidation(formBuilderUtils.composeValidationRules(validation, defauleValidation), validationsRules)
+            validate: formBuilderUtils.defineValidationFunction(formBuilderUtils.composeValidationRules(validation, type, formatKey(key), defauleValidation), validationsRules)
           }));
         }
 
@@ -155,6 +155,7 @@ DynamicFormContainer.defaultProps = {
   initialValues: {},
   containersProps: {},
   filedsProps: {},
+  defauleValidation: {},
   adapters: [],
   formWrapper: 'div'
 };

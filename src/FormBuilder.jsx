@@ -92,8 +92,10 @@ class DynamicFormContainer extends PureComponent {
             ...options,
             ...filedsProps,
             name: formatKey(key),
-            validate: formBuilderUtils.formatValidation(
-              formBuilderUtils.composeValidationRules(validation, defauleValidation),
+            validate: formBuilderUtils.defineValidationFunction(
+              formBuilderUtils.composeValidationRules(
+                validation, type, formatKey(key), defauleValidation,
+              ),
               validationsRules,
             ),
           });
@@ -159,6 +161,7 @@ DynamicFormContainer.defaultProps = {
   initialValues: {},
   containersProps: {},
   filedsProps: {},
+  defauleValidation: {},
   adapters: [],
   formWrapper: 'div',
 };

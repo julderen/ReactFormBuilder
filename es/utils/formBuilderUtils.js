@@ -2,7 +2,7 @@ import _extends from "@babel/runtime/helpers/esm/extends";
 import { isFunction, isArray, isBoolean, map, head, compact, join } from 'lodash';
 export default {
   composeValidationRules(validation, type, name, defaultValidation) {
-    return _extends({}, isFunction(defaultValidation[type]) ? defaultValidation[type](name) : defaultValidation && defaultValidation[type], validation);
+    return _extends({}, isFunction(defaultValidation[type]) ? defaultValidation[type](name) : defaultValidation[type], validation);
   },
 
   defineValidationFunction(validation, validationsRules) {
