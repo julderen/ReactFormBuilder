@@ -1,17 +1,19 @@
-import _ from 'lodash';
+import {
+  isEqual, get, reduce,
+} from 'lodash';
 import memoize from 'memoize-one';
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import formBuilderUtils from './utils/formBuilderUtils';
 
-class DynamicFormContainer extends Component {
+class DynamicFormContainer extends PureComponent {
   constructor(props) {
     super(props);
 
     // Функция адаптации формы для рендера
     this.formatAdapterScheme = memoize(
       (scheme, adapters) => adapters.reduce((res, adapter) => adapter(res), scheme),
-      _.isEqual,
+      isEqual,
     );
   }
 
@@ -42,8 +44,8 @@ class DynamicFormContainer extends Component {
           return this.applyDefaultValue(children, initialValues, change, formatKey(key));
         }
 
-        if (defaultValue && !_.get(initialValues, formatKey(key), null)) {
-          const adaptedValue = _.reduce(
+        if (defaultValue && !get(initialValues, formatKey(key), null)) {
+          const adaptedValue = reduce(
             specialDefaultValues.reverse(),
             (res, adapter) => adapter(defaultValue, type) || res,
             defaultValue,

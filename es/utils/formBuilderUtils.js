@@ -1,75 +1,33 @@
 import _extends from "@babel/runtime/helpers/esm/extends";
-import _ from 'lodash';
-import DateUtils from './dateUtils';
-import { HANDBOOK_FORMAT } from '../constants/dateConstants';
-import FieldValidationRules from './fieldValidationRules';
-import { ERROR_MESSAGES } from '../constants/validationConstants';
-
-const defineValue = value => {
-  if (_.isArray(value) && _.get(_.last(value), 'fileGuid')) {
-    return value.map(val => val.fileGuid);
-  }
-
-  if (DateUtils.isMoment(value)) {
-    return value.format(HANDBOOK_FORMAT);
-  }
-
-  if (_.isPlainObject(value)) {
-    return _.reduce(value, (res, subValue, key) => Object.assign(res, {
-      [key]: defineValue(subValue)
-    }), {});
-  }
-
-  return value;
-};
-
-const ADDITIONAL_VALIDATION = {
-  DatePicker: () => ({
-    date: true
-  }),
-  TimePicker: () => ({
-    time: true
-  }),
-  DateInterval: name => ({
-    date: true,
-    afterSameDate: [`${name}.startDate`, ERROR_MESSAGES.incorrectInterval],
-    beforeSameDate: [`${name}.endDate`, ERROR_MESSAGES.incorrectInterval]
-  })
-};
+import { isFunction, isArray, isBoolean, map, head, compact, join } from 'lodash';
 export default {
-  formatValidation(validation, type, name) {
-    return (value, allValues, props) => {
-      if (!validation) return '';
-
-      const fullValidation = _extends({}, ADDITIONAL_VALIDATION[type] && ADDITIONAL_VALIDATION[type](name), validation);
-
-      const errorMessages = _.map(fullValidation, (val, key) => {
-        if (!_.isFunction(FieldValidationRules[key])) return null;
-
-        if (_.isBoolean(val)) {
-          return val && FieldValidationRules[key](value, allValues, props);
-        }
-
-        if (_.isArray(val)) {
-          return FieldValidationRules[key](...val)(value, allValues, props);
-        }
-
-        return FieldValidationRules[key](val)(value, allValues, props);
-      });
-
-      return _.head(_.compact(errorMessages));
-    };
+  composeValidationRules(validation, type, name, defaultValidation) {
+    return _extends({}, isFunction(defaultValidation[type]) ? defaultValidation[type](name) : defaultValidation[type], validation);
   },
 
-  formatToServer(data) {
-    return _.reduce(data, (res, value, key) => Object.assign(res, {
-      [key]: defineValue(value)
-    }), {});
+  defineValidationFunction(validation, validationsRules) {
+    return (value, allValues, props) => {
+      if (!validation) return '';
+      const errorMessages = map(validation, (val, key) => {
+        if (!isFunction(validationsRules[key])) return null;
+
+        if (isBoolean(val)) {
+          return val && validationsRules[key](value, allValues, props);
+        }
+
+        if (isArray(val)) {
+          return validationsRules[key](...val)(value, allValues, props);
+        }
+
+        return validationsRules[key](val)(value, allValues, props);
+      });
+      return head(compact(errorMessages));
+    };
   },
 
   formatByParenKey(parentKey) {
     return function createKey(key) {
-      return _.join(_.compact([parentKey, key]), '__');
+      return join(compact([parentKey, key]), '__');
     };
   }
 

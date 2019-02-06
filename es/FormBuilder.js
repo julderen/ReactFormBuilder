@@ -1,16 +1,16 @@
 import _extends from "@babel/runtime/helpers/esm/extends";
 import _objectWithoutPropertiesLoose from "@babel/runtime/helpers/esm/objectWithoutPropertiesLoose";
-import _ from 'lodash';
+import { isEqual, get, reduce } from 'lodash';
 import memoize from 'memoize-one';
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import formBuilderUtils from './utils/formBuilderUtils';
 
-class DynamicFormContainer extends Component {
+class DynamicFormContainer extends PureComponent {
   constructor(props) {
     super(props); // Функция адаптации формы для рендера
 
-    this.formatAdapterScheme = memoize((scheme, adapters) => adapters.reduce((res, adapter) => adapter(res), scheme), _.isEqual);
+    this.formatAdapterScheme = memoize((scheme, adapters) => adapters.reduce((res, adapter) => adapter(res), scheme), isEqual);
   }
 
   componentDidMount() {
@@ -20,7 +20,8 @@ class DynamicFormContainer extends Component {
       change
     } = this.props;
     this.applyDefaultValue(scheme, initialValues, change);
-  }
+  } // Применяет дефолтные значения для полей
+
 
   applyDefaultValue() {
     const {
@@ -43,9 +44,8 @@ class DynamicFormContainer extends Component {
           return this.applyDefaultValue(children, initialValues, change, formatKey(key));
         }
 
-        if (defaultValue && !_.get(initialValues, formatKey(key), null)) {
-          const adaptedValue = _.reduce(specialDefaultValues.reverse(), (res, adapter) => adapter(defaultValue, type) || res, defaultValue);
-
+        if (defaultValue && !get(initialValues, formatKey(key), null)) {
+          const adaptedValue = reduce(specialDefaultValues.reverse(), (res, adapter) => adapter(defaultValue, type) || res, defaultValue);
           change(formatKey(key), adaptedValue);
         }
 
@@ -64,7 +64,9 @@ class DynamicFormContainer extends Component {
       filedsList,
       containersList,
       containersProps,
-      filedsProps
+      filedsProps,
+      validationsRules,
+      defauleValidation
     } = this.props; // Функция рендера запоминает контекст и используется в рекурсии
 
     function rednderScheme(params) {
@@ -89,7 +91,7 @@ class DynamicFormContainer extends Component {
 
           return React.createElement(filedsList[type], _extends({}, other, options, filedsProps, {
             name: formatKey(key),
-            validate: formBuilderUtils.formatValidation(validation, type, formatKey(key))
+            validate: formBuilderUtils.formatValidation(formBuilderUtils.composeValidationRules(validation, defauleValidation), validationsRules)
           }));
         }
 
@@ -139,7 +141,13 @@ DynamicFormContainer.propTypes = {
   initialValues: PropTypes.object,
   // Массив функций предназанченных для специфичных значений формы
   specialDefaultValues: PropTypes.arrayOf(PropTypes.func),
-  //
+  // Объект содержащий в себе все возможные функции валидации,
+  // которая должна возвращяать текст ошибки
+  validationsRules: PropTypes.object,
+  // Объект содержащий дефолтнаые валидации для определенных типов компонентов
+  // ключ: навзвание компонента
+  // значение: объект с валидациией или функция (name) возвращет объект валидации
+  defauleValidation: PropTypes.object,
   containersProps: PropTypes.object,
   filedsProps: PropTypes.object
 };
