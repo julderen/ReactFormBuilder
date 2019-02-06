@@ -7,7 +7,7 @@ export default {
     return {
       ...(isFunction(defaultValidation[type])
         ? defaultValidation[type](name)
-        : defaultValidation[type]
+        : defaultValidation && defaultValidation[type]
       ),
       ...validation,
     };
