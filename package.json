@@ -26,9 +26,7 @@
   "author": "Korokhodkin Denis",
   "license": "ISC",
   "dependencies": {
-    "memoize-one": "5.0.0"
-  },
-  "peerDependencies": {
+    "memoize-one": "5.0.0",
     "react": "16.7.0",
     "lodash": "^4.17.0",
     "prop-types": "15.6.2",

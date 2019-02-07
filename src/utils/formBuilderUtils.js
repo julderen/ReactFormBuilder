@@ -1,6 +1,6 @@
 import {
   isFunction, isArray, isBoolean, map, head, compact, join,
-} from 'lodash';
+} from 'lodash-es';
 
 export default {
   composeValidationRules(validation, type, name, defaultValidation) {

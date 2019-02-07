@@ -1,7 +1,7 @@
 import _extends from "@babel/runtime/helpers/esm/extends";
 import _objectWithoutPropertiesLoose from "@babel/runtime/helpers/esm/objectWithoutPropertiesLoose";
 import _inheritsLoose from "@babel/runtime/helpers/esm/inheritsLoose";
-import { isEqual, get, reduce } from 'lodash';
+import { isEqual, get, reduce } from 'lodash-es';
 import memoize from 'memoize-one';
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';

@@ -1,6 +1,6 @@
 import {
   isEqual, get, reduce,
-} from 'lodash';
+} from 'lodash-es';
 import memoize from 'memoize-one';
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
