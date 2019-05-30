@@ -1,12 +1,11 @@
 {
-  "name": "reactformbuilder",
-  "version": "1.0.0",
+  "name": "react-form-builder",
+  "version": "0.2.0",
   "description": "hello",
   "main": "./lib/index.js",
   "module": "./es/index.js",
   "unpkg": "dist/reactFormBuilder.js",
   "files": [
-    "dist",
     "lib",
     "src",
     "es"
@@ -28,26 +27,30 @@
   "dependencies": {
     "@babel/runtime": "7.3.1",
     "memoize-one": "5.0.0",
-    "react": "16.7.0",
-    "prop-types": "15.6.2",
     "lodash-es": "^4.17.0"
+  },
+  "peerDependencies": {
+    "react": "^16.7.0",
+    "prop-types": "^15.6.2"
   },
   "devDependencies": {
     "@babel/cli": "7.2.3",
     "@babel/core": "7.2.2",
     "@babel/plugin-proposal-object-rest-spread": "7.2.0",
     "@babel/plugin-transform-object-assign": "7.2.0",
+    "@babel/plugin-transform-runtime": "7.2.0",
     "@babel/preset-env": "7.2.3",
     "@babel/preset-react": "7.0.0",
-    "@babel/plugin-transform-runtime": "7.2.0",
     "babel-core": "6.26.3",
-    "rollup": "1.1.0",
-    "eslint": "^5.12.0",
+    "eslint": "^5.13.0",
     "eslint-config-airbnb": "^17.1.0",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-jsx-a11y": "^6.1.2",
+    "eslint-config-prettier": "^4.0.0",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-jsx-a11y": "^6.2.1",
+    "eslint-plugin-prettier": "^3.0.1",
     "eslint-plugin-react": "^7.12.4",
-    "prettier": "1.15.3",
+    "prettier": "^1.15.3",
+    "rollup": "1.1.0",
     "rollup-plugin-babel": "4.3.0",
     "rollup-plugin-commonjs": "9.2.0",
     "rollup-plugin-node-resolve": "4.0.0",

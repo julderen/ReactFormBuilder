@@ -1,11 +1,11 @@
 import _extends from "@babel/runtime/helpers/esm/extends";
 import _objectWithoutPropertiesLoose from "@babel/runtime/helpers/esm/objectWithoutPropertiesLoose";
 import _inheritsLoose from "@babel/runtime/helpers/esm/inheritsLoose";
-import { isEqual, get, reduce } from 'lodash-es';
-import memoize from 'memoize-one';
-import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
-import formBuilderUtils from './utils/formBuilderUtils';
+import { isEqual, get, reduce } from "lodash-es";
+import memoize from "memoize-one";
+import React, { PureComponent } from "react";
+import PropTypes from "prop-types";
+import formBuilderUtils from "./utils/formBuilderUtils";
 
 var DynamicFormContainer =
 /*#__PURE__*/
@@ -44,9 +44,7 @@ function (_PureComponent) {
         change = _this$props2.change,
         containersList = _this$props2.containersList;
 
-    function recursingApplay(scheme, parentKey) {
-      var _this2 = this;
-
+    function recurseApply(scheme, parentKey) {
       var formatKey = formBuilderUtils.formatByParenKey(parentKey);
       scheme.map(function (_ref) {
         var type = _ref.type,
@@ -55,7 +53,7 @@ function (_PureComponent) {
             defaultValue = _ref.defaultValue;
 
         if (containersList[type]) {
-          return _this2.applyDefaultValue(children, initialValues, change, formatKey(key));
+          return recurseApply(children, formatKey(key));
         }
 
         if (defaultValue && !get(initialValues, formatKey(key), null)) {
@@ -69,7 +67,7 @@ function (_PureComponent) {
       });
     }
 
-    return recursingApplay(initialScheme);
+    return recurseApply(initialScheme);
   } // Рендерет форму по схеме ({ scheme, parentKey })
   ;
 
@@ -77,14 +75,14 @@ function (_PureComponent) {
     var _this$props3 = this.props,
         initialScheme = _this$props3.scheme,
         adapters = _this$props3.adapters,
-        filedsList = _this$props3.filedsList,
+        fieldsList = _this$props3.fieldsList,
         containersList = _this$props3.containersList,
         containersProps = _this$props3.containersProps,
-        filedsProps = _this$props3.filedsProps,
+        fieldsProps = _this$props3.fieldsProps,
         validationsRules = _this$props3.validationsRules,
-        defauleValidation = _this$props3.defauleValidation; // Функция рендера запоминает контекст и используется в рекурсии
+        defaultValidation = _this$props3.defaultValidation; // Функция рендера запоминает контекст и используется в рекурсии
 
-    function rednderScheme(params) {
+    function renderScheme(params) {
       var scheme = params.scheme,
           parentKey = params.parentKey;
       var formatKey = formBuilderUtils.formatByParenKey(parentKey);
@@ -93,14 +91,14 @@ function (_PureComponent) {
             key = element.key,
             options = element.options;
 
-        if (filedsList[type]) {
+        if (fieldsList[type]) {
           var validation = element.validation,
               other = _objectWithoutPropertiesLoose(element, ["validation"]); //  Рендер компонента
 
 
-          return React.createElement(filedsList[type], _extends({}, other, options, filedsProps, {
+          return React.createElement(fieldsList[type], _extends({}, other, options, fieldsProps, {
             name: formatKey(key),
-            validate: formBuilderUtils.defineValidationFunction(formBuilderUtils.composeValidationRules(validation, type, formatKey(key), defauleValidation), validationsRules)
+            validate: formBuilderUtils.defineValidationFunction(formBuilderUtils.composeValidationRules(validation, type, formatKey(key), defaultValidation), validationsRules)
           }));
         }
 
@@ -108,7 +106,7 @@ function (_PureComponent) {
           //  Рендер контейнера
           return React.createElement(containersList[type], _extends({}, options, containersProps, {
             key: formatKey(key)
-          }), rednderScheme({
+          }), renderScheme({
             scheme: element.children,
             parentKey: formatKey(key)
           }));
@@ -119,7 +117,7 @@ function (_PureComponent) {
       });
     }
 
-    return rednderScheme({
+    return renderScheme({
       scheme: this.formatAdapterScheme(initialScheme, adapters)
     });
   };
@@ -134,7 +132,7 @@ function (_PureComponent) {
 
 DynamicFormContainer.propTypes = {
   // Список компонентов не содержащих в себе другие эдементы
-  filedsList: PropTypes.object.isRequired,
+  fieldsList: PropTypes.object.isRequired,
   // Список компонентов содержащие в себе другие эдементы
   containersList: PropTypes.object.isRequired,
   // Функция с 2 параметрами (имя компонента, новое значение)
@@ -155,16 +153,16 @@ DynamicFormContainer.propTypes = {
   // Объект содержащий дефолтнаые валидации для определенных типов компонентов
   // ключ: навзвание компонента
   // значение: объект с валидациией или функция (name) возвращет объект валидации
-  defauleValidation: PropTypes.object,
+  defaultValidation: PropTypes.object,
   containersProps: PropTypes.object,
-  filedsProps: PropTypes.object
+  fieldsProps: PropTypes.object
 };
 DynamicFormContainer.defaultProps = {
   initialValues: {},
   containersProps: {},
-  filedsProps: {},
-  defauleValidation: {},
+  fieldsProps: {},
+  defaultValidation: {},
   adapters: [],
-  formWrapper: 'div'
+  formWrapper: "div"
 };
 export default DynamicFormContainer;

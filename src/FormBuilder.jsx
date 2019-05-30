@@ -1,10 +1,8 @@
-import {
-  isEqual, get, reduce,
-} from 'lodash-es';
-import memoize from 'memoize-one';
-import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
-import formBuilderUtils from './utils/formBuilderUtils';
+import { isEqual, get, reduce } from "lodash-es";
+import memoize from "memoize-one";
+import React, { PureComponent } from "react";
+import PropTypes from "prop-types";
+import formBuilderUtils from "./utils/formBuilderUtils";
 
 class DynamicFormContainer extends PureComponent {
   constructor(props) {
@@ -12,8 +10,9 @@ class DynamicFormContainer extends PureComponent {
 
     // Функция адаптации формы для рендера
     this.formatAdapterScheme = memoize(
-      (scheme, adapters) => adapters.reduce((res, adapter) => adapter(res), scheme),
-      isEqual,
+      (scheme, adapters) =>
+        adapters.reduce((res, adapter) => adapter(res), scheme),
+      isEqual
     );
   }
 
@@ -24,31 +23,28 @@ class DynamicFormContainer extends PureComponent {
   }
 
   // Применяет дефолтные значения для полей
-
   applyDefaultValue() {
     const {
       scheme: initialScheme,
       specialDefaultValues,
       initialValues,
       change,
-      containersList,
+      containersList
     } = this.props;
 
-    function recursingApplay(scheme, parentKey) {
+    function recurseApply(scheme, parentKey) {
       const formatKey = formBuilderUtils.formatByParenKey(parentKey);
 
-      scheme.map(({
-        type, key, children, defaultValue,
-      }) => {
+      scheme.map(({ type, key, children, defaultValue }) => {
         if (containersList[type]) {
-          return this.applyDefaultValue(children, initialValues, change, formatKey(key));
+          return recurseApply(children, formatKey(key));
         }
 
         if (defaultValue && !get(initialValues, formatKey(key), null)) {
           const adaptedValue = reduce(
             specialDefaultValues.reverse(),
             (res, adapter) => adapter(defaultValue, type) || res,
-            defaultValue,
+            defaultValue
           );
 
           change(formatKey(key), adaptedValue);
@@ -58,7 +54,7 @@ class DynamicFormContainer extends PureComponent {
       });
     }
 
-    return recursingApplay(initialScheme);
+    return recurseApply(initialScheme);
   }
 
   // Рендерет форму по схеме ({ scheme, parentKey })
@@ -67,37 +63,40 @@ class DynamicFormContainer extends PureComponent {
     const {
       scheme: initialScheme,
       adapters,
-      filedsList,
+      fieldsList,
       containersList,
       containersProps,
-      filedsProps,
+      fieldsProps,
       validationsRules,
-      defauleValidation,
+      defaultValidation
     } = this.props;
 
     // Функция рендера запоминает контекст и используется в рекурсии
-    function rednderScheme(params) {
+    function renderScheme(params) {
       const { scheme, parentKey } = params;
       const formatKey = formBuilderUtils.formatByParenKey(parentKey);
 
-      return scheme.map((element) => {
+      return scheme.map(element => {
         const { type, key, options } = element;
 
-        if (filedsList[type]) {
+        if (fieldsList[type]) {
           const { validation, ...other } = element;
 
           //  Рендер компонента
-          return React.createElement(filedsList[type], {
+          return React.createElement(fieldsList[type], {
             ...other,
             ...options,
-            ...filedsProps,
+            ...fieldsProps,
             name: formatKey(key),
             validate: formBuilderUtils.defineValidationFunction(
               formBuilderUtils.composeValidationRules(
-                validation, type, formatKey(key), defauleValidation,
+                validation,
+                type,
+                formatKey(key),
+                defaultValidation
               ),
-              validationsRules,
-            ),
+              validationsRules
+            )
           });
         }
 
@@ -108,9 +107,12 @@ class DynamicFormContainer extends PureComponent {
             {
               ...options,
               ...containersProps,
-              key: formatKey(key),
+              key: formatKey(key)
             },
-            rednderScheme({ scheme: element.children, parentKey: formatKey(key) }),
+            renderScheme({
+              scheme: element.children,
+              parentKey: formatKey(key)
+            })
           );
         }
 
@@ -119,7 +121,9 @@ class DynamicFormContainer extends PureComponent {
       });
     }
 
-    return rednderScheme({ scheme: this.formatAdapterScheme(initialScheme, adapters) });
+    return renderScheme({
+      scheme: this.formatAdapterScheme(initialScheme, adapters)
+    });
   }
 
   render() {
@@ -131,7 +135,7 @@ class DynamicFormContainer extends PureComponent {
 
 DynamicFormContainer.propTypes = {
   // Список компонентов не содержащих в себе другие эдементы
-  filedsList: PropTypes.object.isRequired,
+  fieldsList: PropTypes.object.isRequired,
   // Список компонентов содержащие в себе другие эдементы
   containersList: PropTypes.object.isRequired,
   // Функция с 2 параметрами (имя компонента, новое значение)
@@ -152,18 +156,18 @@ DynamicFormContainer.propTypes = {
   // Объект содержащий дефолтнаые валидации для определенных типов компонентов
   // ключ: навзвание компонента
   // значение: объект с валидациией или функция (name) возвращет объект валидации
-  defauleValidation: PropTypes.object,
+  defaultValidation: PropTypes.object,
   containersProps: PropTypes.object,
-  filedsProps: PropTypes.object,
+  fieldsProps: PropTypes.object
 };
 
 DynamicFormContainer.defaultProps = {
   initialValues: {},
   containersProps: {},
-  filedsProps: {},
-  defauleValidation: {},
+  fieldsProps: {},
+  defaultValidation: {},
   adapters: [],
-  formWrapper: 'div',
+  formWrapper: "div"
 };
 
 export default DynamicFormContainer;

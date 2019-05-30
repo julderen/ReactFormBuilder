@@ -1,12 +1,12 @@
 import _extends from "@babel/runtime/helpers/esm/extends";
-import { isFunction, isArray, isBoolean, map, head, compact, join } from 'lodash-es';
+import { isFunction, isArray, isBoolean, map, head, compact, join } from "lodash-es";
 export default {
   composeValidationRules: function composeValidationRules(validation, type, name, defaultValidation) {
     return _extends({}, isFunction(defaultValidation[type]) ? defaultValidation[type](name) : defaultValidation[type], validation);
   },
   defineValidationFunction: function defineValidationFunction(validation, validationsRules) {
     return function (value, allValues, props) {
-      if (!validation) return '';
+      if (!validation) return "";
       var errorMessages = map(validation, function (val, key) {
         if (!isFunction(validationsRules[key])) return null;
 
@@ -25,7 +25,7 @@ export default {
   },
   formatByParenKey: function formatByParenKey(parentKey) {
     return function createKey(key) {
-      return join(compact([parentKey, key]), '__');
+      return join(compact([parentKey, key]), "__");
     };
   }
 };
