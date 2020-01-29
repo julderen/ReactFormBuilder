@@ -1,4 +1,4 @@
-import { isEqual, get, reduce } from "lodash-es";
+import { isEqual, reduce } from "lodash-es";
 import memoize from "memoize-one";
 import React, { PureComponent } from "react";
 import PropTypes from "prop-types";
@@ -40,7 +40,7 @@ class DynamicFormContainer extends PureComponent {
           return recurseApply(children, formatKey(key));
         }
 
-        if (defaultValue && !get(initialValues, formatKey(key), null)) {
+        if (defaultValue && !initialValues) {
           const adaptedValue = reduce(
             specialDefaultValues.reverse(),
             (res, adapter) => adapter(defaultValue, type) || res,
